@@ -1,0 +1,57 @@
+<!-- templates/users/signup.html -->
+{% extends "base.html" %}
+{% block title %}Зарегистрироваться{% endblock %}
+{% block content %}{# base.html подтягивает блок content от сюда #}
+  <div class="row justify-content-center">
+    <div class="col-md-4 p-5">
+      <div class="card">
+        <div class="card-header">
+          Зарегистрироваться
+        </div>
+        <div class="card-body">
+          {# Этот блок будет показан, если в форме есть ошибки #}
+          {% load user_filters %} {# Подгружаем фильры из файла core/temlatetags/user_filters #}
+          {% if form.errors %}
+            {% for field in form %}
+              {% for error in field.errors %}            
+                <div class="alert alert-danger">
+                  {{ error|escape }}
+                </div>
+              {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ error|escape }}
+              </div>
+            {% endfor %}
+          {% endif %}
+
+            <form method="post" action="{% url 'users:var_signup' %}">
+              {% csrf_token %}
+              {% for field in form %}{# View-класс передаёт в form объект формы. Объект form содержит список полей веб-формы. #}
+              <div class="form-group row my-3 p-3">
+                <label for="{{ field.id_for_label }}">
+                  {{ field.label }}
+                  {% if field.field.required %}
+                    <span class="required text-danger">*</span>
+                  {% endif %}
+                </label>    
+                {{ field|addclass:'form-control' }} {# К полю ввода добавляем атрибут class. #}
+                {% if field.help_text %}
+                  <small id="{{ field.id_for_label }}-help" class="form-text text-muted">
+                    {{ field.help_text|safe }}
+                  </small>
+                {% endif %}
+              </div>
+              {% endfor %}
+              <div class="col-md-6 offset-md-4">
+                <button type="submit" class="btn btn-primary">
+                  Зарегистрироваться
+                </button>
+              </div>
+            </form>
+          </div> <!-- card body -->
+        </div> <!-- card -->
+      </div> <!-- col -->
+  </div> <!-- row -->
+{% endblock %}
