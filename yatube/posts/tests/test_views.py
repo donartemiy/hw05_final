@@ -65,14 +65,12 @@ class PostsViewsTests(TestCase):
             slug='test_slug_group',
             description='Тестовое описание группы'
         )
-        small_gif = (
-             b'\x47\x49\x46\x38\x39\x61\x02\x00'
-             b'\x01\x00\x80\x00\x00\x00\x00\x00'
-             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-             b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-             b'\x0A\x00\x3B'
-        )
+        small_gif = (b'\x47\x49\x46\x38\x39\x61\x02\x00'
+                     b'\x01\x00\x80\x00\x00\x00\x00\x00'
+                     b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+                     b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+                     b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+                     b'\x0A\x00\x3B')
         uploaded = SimpleUploadedFile(
             name='small.gif',
             content=small_gif,
@@ -225,7 +223,7 @@ class PostsViewsTests(TestCase):
                 page_object = response.context['page_obj']
                 self.assertEqual(page_object[0], post)
 
-    def test_authorized_create_comment(self):
+    def test_authorized_has_form_to_comment(self):
         """ Авторизованный пользователь может комментировать посты. """
         response = self.authorized_client.get(reverse(
             'posts:post_detail',
@@ -233,15 +231,7 @@ class PostsViewsTests(TestCase):
         )
         self.assertTrue(response.context.get('form'))
 
-    def test_guest_no_create_comment(self):
-        """ Неавторизованный пользователь не может комментировать посты. """
-        response = self.guest_client.get(reverse(
-            'posts:post_detail',
-            kwargs={'post_id': PostsViewsTests.post.pk})
-        )
-        self.assertFalse(response.context.get('form'))
-
-    def test_addition_comment_to_post_detail(self):
+    def test_add_comment_to_post_detail_authorized(self):
         """ После успешной отправки комментарий
         появляется на странице поста. """
         form_data = {
@@ -266,6 +256,35 @@ class PostsViewsTests(TestCase):
         )
         self.assertEqual(
             response.context.get('comments').last().text,
+            form_data['text']
+        )
+
+    def test_add_comment_to_post_detail_anonymus(self):
+        """ Неавторизованный пользователь. После отправки,
+        комментарий не добавляется в БД. """
+        form_data = {
+            'text': 'Тестовый комментарий',
+            'user': PostsViewsTests.test_user,
+            'author': PostsViewsTests.post.author
+        }
+        # Добавляем комментарий
+        self.guest_client.post(
+            reverse(
+                'posts:add_comment',
+                kwargs={'post_id': PostsViewsTests.post.pk}
+            ),
+            data=form_data,
+            follow=True
+        )
+
+        # Получаем страницу после добавления комм-я
+        response = self.guest_client.get(reverse(
+            'posts:post_detail',
+            kwargs={'post_id': PostsViewsTests.post.pk})
+        )
+        # В БД не должно быть записи
+        self.assertNotEqual(
+            response.context.get('comments').last(),
             form_data['text']
         )
 
@@ -381,6 +400,15 @@ class PostsViewsTests(TestCase):
             with self.subTest(post=post):
                 self.assertEqual(post.author.username, 'TestUser')
                 self.assertNotEqual(post.author.username, 'TestUser1')
+
+    # def test_correct_template_profile_follow(self):
+    #     namespace_name = reverse(reverse(
+    #         'posts:profile_follow',
+    #         kwargs={'username': 'TestUser'}),
+    #         follow=True
+    #     )
+    #     response = self.authorized_client.get(namespace_name)
+    #     self.assertTemplateUsed(response, 'posts/profile.html')
 
 
 class PaginatorViewsTest(TestCase):

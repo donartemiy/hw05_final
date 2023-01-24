@@ -59,21 +59,13 @@ def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     form = CommentForm(request.POST or None, files=request.FILES or None)
     comments = Comment.objects.filter(post=post)
-    if request.user.is_authenticated:
-        context = {
-            'post': post,
-            'post_id': post_id,
-            'form': form,
-            'comments': comments,
-            'user': request.user
-        }
-    else:
-        context = {
-            'post': post,
-            'post_id': post_id,
-            'comments': comments,
-            'user': request.user
-        }
+    context = {
+        'post': post,
+        'post_id': post_id,
+        'form': form,
+        'comments': comments,
+        'user': request.user
+    }
     return render(request, 'posts/post_detail.html', context)
 
 
@@ -115,6 +107,7 @@ def post_edit(request, post_id):
     return render(request, 'posts/create_post.html', context)
 
 
+@login_required
 def add_comment(request, post_id):
     """Функция вызывается из шаблона comment.html"""
     post = get_object_or_404(Post, pk=post_id)
