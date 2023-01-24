@@ -66,7 +66,7 @@ class StaticURLTests(TestCase):
             '/create/': '/auth/login/?next=/create/',
             f'/profile/{StaticURLTests.test_user.username}/follow/':
             (f'/auth/login/?next=/profile/{StaticURLTests.test_user.username}'
-              '/follow/'),
+             f'/follow/'),
             '/follow/': '/auth/login/?next=/follow/'
         }
         for url, expected_answer in url_expected_answer.items():

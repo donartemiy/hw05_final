@@ -29,7 +29,7 @@ urlpatterns = [
     path('about/', include('about.urls', namespace='about_namespace')),
 ]
 
-# В режиме отлажки позволяет обращаться к файлам в директории, 
+# В режиме отлажки позволяет обращаться к файлам в директории,
 # указанной в MEDIA_ROOT по имени, через префикс MEDIA_URL.
 if settings.DEBUG:
     urlpatterns += static(
