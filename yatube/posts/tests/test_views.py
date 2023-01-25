@@ -401,15 +401,6 @@ class PostsViewsTests(TestCase):
                 self.assertEqual(post.author.username, 'TestUser')
                 self.assertNotEqual(post.author.username, 'TestUser1')
 
-    # def test_correct_template_profile_follow(self):
-    #     namespace_name = reverse(reverse(
-    #         'posts:profile_follow',
-    #         kwargs={'username': 'TestUser'}),
-    #         follow=True
-    #     )
-    #     response = self.authorized_client.get(namespace_name)
-    #     self.assertTemplateUsed(response, 'posts/profile.html')
-
 
 class PaginatorViewsTest(TestCase):
     @classmethod
