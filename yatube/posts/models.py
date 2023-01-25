@@ -39,12 +39,12 @@ class Post(models.Model):
         upload_to='posts/',
         blank=True
     )
-    comments = models.ForeignKey(
-        'Comment',
-        null=True,
-        on_delete=models.CASCADE,
-        verbose_name='Комментарий'
-    )
+    # comments = models.ForeignKey( это вызывало рекурсию pytesta
+    #     'Comment',
+    #     null=True,
+    #     on_delete=models.CASCADE,
+    #     verbose_name='Комментарий'
+    # )
 
     class Meta:
         ordering = ['-pub_date']
