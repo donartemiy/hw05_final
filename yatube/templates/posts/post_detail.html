@@ -42,8 +42,8 @@
           {% endthumbnail %} {% endcomment %}
           <p>{{ post.text }}</p>
           <a href="{% url 'posts:post_detail' post.pk %}">подробная информация</a>
-          {% if post.author == request_user %}
-          <a class="btn btn-primary" href="{% url 'posts:post_edit' post_id %}">
+          {% if post.author == request.user %}
+          <a class="btn btn-primary" href="{% url 'posts:post_edit' post.id %}">
             редактировать запись
           {% endif %}
           </a> 

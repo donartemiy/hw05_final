@@ -4,17 +4,13 @@
 {% block title %}Последние обновления на сайте{% endblock %} 
 
 {% block content %}
-{% include 'posts/includes/switcher.html' %}
-      <!-- класс py-5 создает отступы сверху и снизу блока -->
+{% include 'posts/includes/switcher.html' with index=True %}
       <div class="container py-5">     
         <h1>Последние обновления на сайте</h1>
-        {% load cache %}
-        {% cache 20 index_page %}
         <article>
           {% for post in page_obj %}
             <ul>
               <li>
-                {# Условие ниже нужно, т.к. через shell насоздавал записей #}
                 Автор: {{ post.author.get_full_name }}
                 <a href="{% url 'posts:profile' post.author %}">все посты пользователя</a>
               </li>
@@ -42,8 +38,6 @@
             {% if not forloop.last %}<hr>{% endif %}
           {% endfor %} 
         </article>
-        {% endcache 20 index_page %}
-        {# Подтягиваем paginator из шаблона #}
         {% include 'posts/includes/paginator.html' %} 
       </div>
 {% endblock %} 

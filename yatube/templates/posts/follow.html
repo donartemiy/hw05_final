@@ -1,17 +1,13 @@
-{# На основе posts/index.html #}
-
 {% extends 'base.html' %}
 {% load thumbnail %}
 
 {% block title %}Посты авторов, на которых вы подписаны{% endblock %} 
 
 {% block content %}
-{% include 'posts/includes/switcher.html' %}
+{% include 'posts/includes/switcher.html' with follow=True %}
       <!-- класс py-5 создает отступы сверху и снизу блока -->
       <div class="container py-5">     
         <h1>Посты авторов, на которых вы подписаны</h1>
-        {% load cache %}
-        {% cache 20 profile_page %}
         <article>
           {% for post in page_obj %}
             <ul>
@@ -44,7 +40,6 @@
             {% if not forloop.last %}<hr>{% endif %}
           {% endfor %} 
         </article>
-        {% endcache 20 profile_page %}
         {# Подтягиваем paginator из шаблона #}
         {% include 'posts/includes/paginator.html' %} 
       </div>
