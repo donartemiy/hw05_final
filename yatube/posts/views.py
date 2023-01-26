@@ -55,7 +55,6 @@ def profile(request, username):
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     form = CommentForm(request.POST or None, files=request.FILES or None)
-    # comments = Comment.objects.filter(post=post)
     comments = post.comment_rname.all()
     context = {
         'post': post,

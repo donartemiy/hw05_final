@@ -5,7 +5,6 @@
 {% block title %}{{ group }}{% endblock %} 
 
 {% block content %}
-      <!-- класс py-5 создает отступы сверху и снизу блока -->
       <div class="container py-5">
         <h1> Записи сообщества: {{ group }}</h1>
         <p> 
@@ -36,7 +35,6 @@
             {% if not forloop.last %}<hr>{% endif %}
           {% endfor %}        
         </article>
-        {# Подтягиваем paginator из шаблона #}
         {% include 'posts/includes/paginator.html' %} 
       </div>  
 {% endblock %} 

@@ -23,7 +23,8 @@ class Post(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Автор'
+        verbose_name='Автор',
+        help_text='Укажите автора'
     )
     group = models.ForeignKey(
         Group,
@@ -37,7 +38,8 @@ class Post(models.Model):
         'Картинка',
         upload_to='posts/',
         blank=True,
-        null=True
+        null=True,
+        help_text='Выберите изображение'
     )
 
     class Meta:
@@ -90,4 +92,7 @@ class Follow(models.Model):
     )
 
     class Meta:
-        unique_together = ('user', 'author')
+        constraints = [models.UniqueConstraint(
+            fields=['user', 'author'],
+            name='unique subs')
+        ]

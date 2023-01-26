@@ -5,7 +5,6 @@
 {% block title %}{{ author.get_full_name }} профайл пользователя{% endblock %} 
 
 {% block content %}
-      <!-- Вилка для кнопки "подписаться" -->
       <div class="container py-5">
         <div class="mb-5">
           <h1>Все посты пользователя {{ author.get_full_name }}</h1>
@@ -44,7 +43,7 @@
           <p>
             {{ post.text }}
           </p>
-          <a href="{% url 'posts:post_detail' post.id %}">подробная информация </a>{# Тут не понятно как сделать ссылку, итерируемся по пагинатору #}
+          <a href="{% url 'posts:post_detail' post.id %}">подробная информация </a>
         </article>
           {% if post.group %}
           <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>

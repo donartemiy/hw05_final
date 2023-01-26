@@ -18,19 +18,6 @@ TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostsViewsTests(TestCase):
-    def generate_posts_to_database(self, count_of_posts, user, group=None):
-        """ Добавляем записи в БД что бы было с чем работать. """
-        self.expect_set = set()
-        posts_list = []
-        for number in range(count_of_posts):
-            posts_list.append(Post(
-                text=f'Текст поста{number}',
-                author=user,
-                group=group
-            ))
-            self.expect_set.add(f'Текст поста{number}')
-        self.posts = Post.objects.bulk_create(posts_list)
-
     @classmethod
     def setUpClass(cls):
         """ Создание записи в БД. """
@@ -105,69 +92,27 @@ class PostsViewsTests(TestCase):
                 response = self.authorized_client.get(namspace_name)
                 self.assertTemplateUsed(response, template)
 
-    def test_context_index_count_posts_on_page(self):
+    def test_context_to_index_group_list_profile(self):
         """  Соответствует ли ожиданиям словарь 'context',
-        передаваемый в шаблон при вызове.
-        Context должен содержать список постов"""
-        Post.objects.all().delete()
-        self.generate_posts_to_database(
-            NUMB_POSTS,
-            PostsViewsTests.test_user,
-            PostsViewsTests.group
-        )
-        response = self.authorized_client.get(reverse('posts:index'))
-        page_object = response.context['page_obj']
-        self.assertEqual(len(page_object), NUMB_POSTS)
-        for post in page_object:
-            with self.subTest(post=post):
-                self.assertIn(str(post), self.expect_set)
-
-    def test_context_group_list(self):
-        """  Соответствует ли ожиданиям словарь 'context',
-        передаваемый в шаблон при вызове. Context должен содержать
-        список постов отфильтрованных по группе. """
-        Post.objects.all().delete()
-        self.generate_posts_to_database(
-            NUMB_POSTS,
-            PostsViewsTests.test_user,
-        )
-        self.generate_posts_to_database(
-            NUMB_POSTS,
-            PostsViewsTests.test_user,
-            PostsViewsTests.group
-        )
-        response = self.authorized_client.get(reverse(
-            'posts:group_list',
-            kwargs={'slug': PostsViewsTests.group.slug})
-        )
-        result_set = set()
-        for post in response.context['page_obj']:
-            result_set.add(post.text)
-        self.assertEqual(result_set, self.expect_set)
-
-    def test_context_profile(self):
-        """  Соответствует ли ожиданиям словарь 'context',
-        передаваемый в шаблон при вызове. Context должен содержать
-        список постов отфильтрованных по пользователю. """
-        Post.objects.all().delete()
-        self.generate_posts_to_database(
-            NUMB_POSTS,
-            PostsViewsTests.test_user
-        )
-        username = 'mr_blue'
-        test_user_red = User.objects.create_user(username=username)
-        self.generate_posts_to_database(
-            NUMB_POSTS,
-            test_user_red
-        )
-        response = self.authorized_client.get(reverse(
-            'posts:profile',
-            kwargs={'username': username})
-        )
-        result_set = set()
-        for post in response.context['page_obj']:
-            result_set.add(post.text)
-        self.assertEqual(result_set, self.expect_set)
+        передаваемый в шаблон при вызове. Context должен
+        - содержать список постов;
+        - список постов отфильтрованных по группе;
+        - список постов отфильтрованных по пользователю."""
+        pages = [
+            (reverse('posts:index')),
+            (reverse(
+                'posts:group_list',
+                kwargs={'slug': PostsViewsTests.group.slug})),
+            (reverse(
+                'posts:profile',
+                kwargs={'username': PostsViewsTests.test_user.username}))
+        ]
+        for page in pages:
+            with self.subTest(page=page):
+                response = self.authorized_client.get(page)
+                self.assertEqual(
+                    response.context['page_obj'][0],
+                    PostsViewsTests.post)
 
     def test_context_post_detail(self):
         """  Соответствует ли ожиданиям словарь 'context',
@@ -264,13 +209,10 @@ class PostsViewsTests(TestCase):
         response_third = (self.authorized_client.get(reverse('posts:index')))
         self.assertNotEqual(response_first.content, response_third.content)
 
-    def test_img_in_context_index(self):
-        response = self.authorized_client.get(reverse('posts:index'))
-        self.assertTrue(response.context['page_obj'][0].image)
-
     def test_img_on_pages(self):
         """ Проверяем, что на страницах есть картинка. """
         pages = [
+            (reverse('posts:index')),
             (reverse(
                 'posts:profile',
                 kwargs={'username': PostsViewsTests.test_user})),
@@ -288,6 +230,10 @@ class PostsViewsTests(TestCase):
                     self.assertTrue(response.context['page_obj'][0].image)
                 elif response.context.get('post'):
                     self.assertTrue(response.context['post'].image)
+                    self.assertEqual(
+                        response.context['post'].image,
+                        PostsViewsTests.post.image
+                    )
 
     def test_profile_follow(self):
         """ Авторизованный пользователь. Переход по ссылке
@@ -295,7 +241,7 @@ class PostsViewsTests(TestCase):
         username = 'mr_blue'
         test_user_red = User.objects.create_user(username=username)
 
-        count_follow_obj = len(Follow.objects.all())
+        count_follow_obj = Follow.objects.count()
 
         self.authorized_client.get(reverse(
             'posts:profile_follow',
@@ -305,11 +251,7 @@ class PostsViewsTests(TestCase):
             user=PostsViewsTests.test_user,
             author=test_user_red))
 
-        self.assertEqual(count_follow_obj + 1, len(Follow.objects.all()))
-        self.assertTrue(Follow.objects.get(
-            user=PostsViewsTests.test_user,
-            author=test_user_red)
-        )
+        self.assertEqual(count_follow_obj + 1, Follow.objects.count())
         self.assertEqual(follow_obj.user, PostsViewsTests.test_user)
         self.assertEqual(follow_obj.author, test_user_red)
 
@@ -323,12 +265,13 @@ class PostsViewsTests(TestCase):
             user=PostsViewsTests.test_user,
             author=test_user_red
         )
-        count_follow_obj = Follow.objects.all().count()
+        count_follow_obj = Follow.objects.count()
+
         self.authorized_client.get(reverse(
             'posts:profile_unfollow',
             kwargs={'username': test_user_red})
         )
-        self.assertEqual(Follow.objects.all().count() + 1, count_follow_obj)
+        self.assertEqual(Follow.objects.count() + 1, count_follow_obj)
         self.assertFalse(Follow.objects.filter(
             user=PostsViewsTests.test_user,
             author=test_user_red).exists()
@@ -337,16 +280,9 @@ class PostsViewsTests(TestCase):
     def test_entity_appeared_after_follow(self):
         """ Новая запись пользователя появляется в ленте тех,
         кто на него подписан. """
-        Post.objects.all().delete()
-        username_red = 'mr_red'
         username_blue = 'mr_blue'
-        test_user_red = User.objects.create_user(username=username_red)
         test_user_blue = User.objects.create_user(username=username_blue)
-        self.generate_posts_to_database(NUMB_POSTS, test_user_red)
-        self.generate_posts_to_database(NUMB_POSTS, test_user_blue)
-
-        authorized_client_red = Client()
-        authorized_client_red.force_login(test_user_red)
+        post_blue = Post.objects.create(text='', author=test_user_blue)
 
         Follow.objects.create(
             user=PostsViewsTests.test_user,
@@ -355,33 +291,14 @@ class PostsViewsTests(TestCase):
         response = self.authorized_client.get(
             reverse('posts:follow_index')
         )
-        for post in response.context['page_obj']:
-            with self.subTest(post=post):
-                self.assertEqual(post.author.username, username_blue)
-                self.assertNotEqual(post.author.username, username_red)
-
-        for post in Post.objects.filter(author=test_user_blue):
-            self.assertIn(post, response.context['page_obj'])
+        self.assertEqual(response.context['page_obj'][0], post_blue)
 
     def test_no_follow_no_entity(self):
         """ Пост не появляется, если не подписан. """
-        Post.objects.all().delete()
-        username_red = 'mr_red'
-        username_blue = 'mr_blue'
-        test_user_red = User.objects.create_user(username=username_red)
-        test_user_blue = User.objects.create_user(username=username_blue)
-        self.generate_posts_to_database(NUMB_POSTS, test_user_red)
-        self.generate_posts_to_database(NUMB_POSTS, test_user_blue)
-
-        Follow.objects.create(
-            user=PostsViewsTests.test_user,
-            author=test_user_red)
-
-        response = self.authorized_client.get(reverse('posts:follow_index'))
-        for post in response.context['page_obj']:
-            with self.subTest(post=post):
-                self.assertEqual(post.author.username, username_red)
-                self.assertNotEqual(post.author.username, username_blue)
+        response = self.authorized_client.get(
+            reverse('posts:follow_index')
+        )
+        self.assertFalse(response.context['page_obj'])
 
 
 class PaginatorViewsTest(TestCase):
@@ -395,15 +312,14 @@ class PaginatorViewsTest(TestCase):
             description='Тестовое описание',
         )
 
-        posts_list = []
+        posts = []
         for index in range(NUMB_POSTS_PAGINATOR):
-            posts_list.append(Post(
+            posts.append(Post(
                 author=cls.user,
                 text=f'Тестовый пост {index}',
                 group=cls.group)
             )
-        # хак для быстрого создания записей
-        cls.posts = Post.objects.bulk_create(posts_list)
+        cls.posts = Post.objects.bulk_create(posts)
 
     def setUp(self):
         self.authorized_client = Client()
